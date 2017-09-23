@@ -8,12 +8,23 @@ var hasher = bkfd2Password();
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
+var OrientDB = require('orientjs');
+var server = OrientDB({
+   host:       'localhost',
+   port:       2424,
+   username:   'root',
+   password:   'star3244'
+});
+var db = server.use('o2');
+var OrientoStore = require('connect-oriento')(session);
 
 app.use(session({
   secret: 'fewonowavn;mdsd',
   resave: false,
   saveUninitialized: true,
-  store: new FileStore()
+  store: new OrientoStore({
+    server: "host=localhost&port=2424&username=root&password=star3244&db=o2",
+  }),
 }));
 app.use(bodyParser.urlencoded( {extended: false} ));
 app.use(passport.initialize());
@@ -78,13 +89,20 @@ app.post('/auth/register', function(req, res){
       salt: salt,
       displayName: req.body.displayName
     };
-    users.push(user);
-
-    req.login(user, function(err){
-      req.session.save(function(){
-        res.redirect('/welcome');
+    var sql = 'INSERT INTO user (authId,username,password,salt,displayName) VALUES(:authId, :username, :password, :salt, :displayName)';
+    db.query(sql, {
+      params: user
+    }).then(function(results){
+      req.login(user, function(err){
+        req.session.save(function(){
+          res.redirect('/welcome');
+        });
       });
+    }, function(error){
+      console.log(error);
+      res.status(500);
     });
+
   });
 });
 
@@ -124,13 +142,16 @@ passport.serializeUser(function(user, done) {
 
 passport.deserializeUser(function(id, done) {
   console.log('deserializeUser', id);
-  for( var i = 0; i < users.length; i++ ){
-    var user = users[i];
-    if(user.authId === id){
-      return done(null, user);
+
+  var sql = 'SELECT * FROM user WHERE authId= :authId';
+  db.query(sql, {params: { authId:id } }).then(function(results){
+    if(results.length === 0){
+      done('there is no user.');
+    } else {
+      done(null, results[0]);
     }
-  }
-  done('There is no user.');
+  });
+
 });
 
 passport.use(new LocalStrategy(
@@ -138,23 +159,26 @@ passport.use(new LocalStrategy(
       var uname = username;
       var pwd = password;
 
-      for( var i = 0; i < users.length; i++ ){
-        var user = users[i];
-
-        if(uname === user.username){
-
-          return hasher({password: pwd, salt: user.salt}, function(err, pass, salt, hash){
-            if( hash === user.password ){
-              console.log('LocalStrategy', user);
-              done(null, user);
-            } else {
-              done(null, false);
-            }
-         });
+      var sql = 'SELECT * FROM user WHERE authId = :authId';
+      db.query(sql, { params: { authId: "local:" + uname } }).then(function(results){
+        if( results.length === 0 ){
+          done( null, false );
         }
-      }
-      done(null, false);
-  }
+
+        var user = results[0];
+
+        return hasher({password: pwd, salt: user.salt}, function(err, pass, salt, hash){
+          if( hash === user.password ){
+            console.log('LocalStrategy', user);
+            done(null, user);
+          } else {
+            done(null, false);
+          }
+       });
+
+      });
+
+    }
 ));
 
 passport.use(new FacebookStrategy({
@@ -166,24 +190,27 @@ passport.use(new FacebookStrategy({
   function(accessToken, refreshToken, profile, done) {
     console.log(profile);
     var authId = 'facebook:' + profile.id;
-    for( var i = 0; i < users.length; i++ ){
-      var user = users[i];
-      if( user.authId === authId ){
-        return done(null, user);
-      }
-    }
-    var newUser = {
-      'authId': authId,
-      'displayName': profile.displayName,
-      'email': profile.emails[0].value,
-    };
-    users.push( newUser );
-    done( null, newUser );
 
-    // User.findOrCreate(..., function(err, user) {
-    //   if (err) { return done(err); }
-    //   done(null, user);
-    // });
+    var sql = 'SELECT * FROM user WHERE authId = :authId';
+    db.query(sql, {params:{authId:authId}}).then(function(results){
+      if(results.length === 0){
+        var newUser = {
+          'authId': authId,
+          'displayName': profile.displayName,
+          'email': profile.emails[0].value,
+        };
+        var sql = 'INSERT INTO user (authId, displayName, email) VALUES (:authId, :displayName, :email)';
+        db.query(sql, {params: newUser}).then(function(results){
+          done(null, results[0]);
+        }, function(error){
+          console.log(error);
+        });
+      } else {
+        done(null, results[0] );
+      }
+
+    });
+
   }
 ));
 
