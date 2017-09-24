@@ -18,6 +18,9 @@ var server = OrientDB({
 var db = server.use('o2');
 var OrientoStore = require('connect-oriento')(session);
 
+app.set('view engine', 'jade');
+app.set('views', './views/orientdb');
+
 app.use(session({
   secret: 'fewonowavn;mdsd',
   resave: false,
@@ -26,6 +29,7 @@ app.use(session({
     server: "host=localhost&port=2424&username=root&password=star3244&db=o2",
   }),
 }));
+
 app.use(bodyParser.urlencoded( {extended: false} ));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -59,25 +63,7 @@ app.get('/welcome', function(req, res){
 });
 
 app.get('/auth/register', function(req, res){
-  var output = `
-    <h2>Register</h2>
-      <form action="/auth/register" method="POST">
-        <p>
-          <label for="username">Username</label>
-          <input type="text" name="username" />
-        </p>
-        <p>
-          <label for="password">Password</label>
-          <input type="password" name="password" />
-        </p>
-        <p>
-          <label for="displayName">Display Name</label>
-          <input type="text" name="displayName" />
-        </p>
-        <input type="submit" value="Submit" />
-      </form>
-  `;
-  res.send(output);
+  res.render('auth/register');
 });
 
 app.post('/auth/register', function(req, res){
@@ -107,33 +93,8 @@ app.post('/auth/register', function(req, res){
 });
 
 app.get('/auth/login', function(req, res){
-  var output = `
-    <h2>Log in</h2>
-    <form action="/auth/login" method="POST">
-      <p>
-        <label for="username">Username</label>
-        <input type="text" name="username" />
-      </p>
-      <p>
-        <label for="password">Password</label>
-        <input type="password" name="password" />
-      </p>
-      <input type="submit" value="Submit" />
-    </form>
-    <a href="/auth/facebook">Facebook</a>
-  `;
-  res.send( output );
+  res.render( 'auth/login' );
 });
-
-var users = [
-  {
-    authId: "local:egoing",
-    username: "egoing",
-    password: 'maMqs8u9oZ6p4MnSmjTO3qTqDL18yzh1jvGzk0idHyojTG0BdKLp+ZP0tBaFi/O+1rjoyfjgNJe3TOpK5BayPoxdPem3pcXkSOchmI0jxNsZCEbIylGeyWw7OP42etRCvDJJ5qS6LJPykicgryfLo2TiJw/jfNbiMty251acW8E=',
-    displayName: 'Jake',
-    salt: 'rUNP/woOyEjLdojlsbjx+3RA394CUb7t9knfs3r1n7HCrq0SrggoHL17NTJHQkK38DL/GwzRY1S7cyHo9TWUqg==',
-  },
-];
 
 passport.serializeUser(function(user, done) {
   console.log('serializeUser', user);
