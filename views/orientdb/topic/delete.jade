@@ -1,0 +1,9 @@
+extends ../layout
+block content
+  article
+    h1= 'Delete?' + topic.title
+    - rid = encodeURIComponent(topic['@rid'])
+    form(action='/topic/'+ rid +'/delete' method='POST')
+      p
+        input(type='submit' value="yes")
+      a(href='/topic/'+rid) No

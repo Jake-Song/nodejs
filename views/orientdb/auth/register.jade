@@ -1,15 +1,14 @@
-doctype html
-html
-  body
-    h2 Register
-    form(action='/auth/register', method='POST')
-      p
-        label(for='username') Username
-        input(type='text', name='username')
-      p
-        label(for='password') Password
-        input(type='password', name='password')
-      p
-        label(for='displayName') DisplayName
-        input(type='text', name='displayName')
-      input(type='submit', value='Submit')
+extends ../layout
+block content
+  h2 Register
+  form(action='/auth/register', method='POST')
+    p
+      label(for='username') Username
+      input(type='text', name='username')
+    p
+      label(for='password') Password
+      input(type='password', name='password')
+    p
+      label(for='displayName') DisplayName
+      input(type='text', name='displayName')
+    input(type='submit', value='Submit')

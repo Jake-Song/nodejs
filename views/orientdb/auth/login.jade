@@ -1,13 +1,12 @@
-doctype html
-html
-  body
-    h2 Log in
-    form(action='/auth/login', method='POST')
-      p
-        label(for='username') Username
-        input(type='text', name='username')
-      p
-        label(for='password') Password
-        input(type='password', name='password')
-      input(type='submit', value='Submit')
-    a(href='/auth/facebook') Facebook
+extends ../layout
+block content
+  h2 Log in
+  form(action='/auth/login', method='POST')
+    p
+      label(for='username') Username
+      input(type='text', name='username')
+    p
+      label(for='password') Password
+      input(type='password', name='password')
+    input(type='submit', value='Submit')
+  a(href='/auth/facebook') Facebook

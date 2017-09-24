@@ -1,0 +1,11 @@
+extends ../layout
+block content
+  article
+    form(action='/topic/add' method='POST')
+      p
+        input(type='text' name='title' placeholder='title')
+      p
+        textarea(name='description' placeholder='description')
+      p
+        input(type='text' name='author' placeholder='author')
+      input(type='submit')
